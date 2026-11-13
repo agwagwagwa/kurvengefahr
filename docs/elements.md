@@ -64,13 +64,20 @@ on canvas bakes into the pattern's box, so it regenerates crisp at the new size.
 ## Images (raster tracing)
 
 Import a photo or drawing (file import, or just paste an image) and restyle it as strokes. One
-image, ten renderings, switchable live:
+image, twelve renderings, switchable live:
 
 - **Outlines** - faithful contour tracing of dark regions, with threshold, smoothing, and
   despeckle controls.
 - **Centerline** - skeleton tracing for line art: one stroke down the middle of each line.
 - **Topographic** - iso-tone contour lines, like a terrain map of the image's darkness.
 - **Hatch** - engraving-style tonal cross-hatch, darker areas gaining crossing layers.
+- **Aligned hatch** - the same tone bands, but all at one angle: each darker band adds lines
+  offset a fraction of the spacing between the existing ones, so tone reads as line density
+  without any crossings.
+- **Radial aligned hatch** - aligned hatching around a center point, as concentric rings (which
+  never cross) or rays that meet at the center. The center is set in image coordinates (0 to 1
+  across each side); values outside that range put it off the image, for gently curving rings or
+  nearly parallel rays.
 - **Pressure hatch** - a single even hatch where darkness rides on pen pressure (for machines
   with [variable pressure](plotting.md#pens-and-pressure)).
 - **Scanlines** - horizontal squiggle lines, wiggle amplitude proportional to darkness.

@@ -17,6 +17,8 @@ export type RasterMethod =
   | 'centerline' // skeleton/centreline tracing for line art (one stroke per line)
   | 'contourmap' // topographic iso-tone lines
   | 'hatch' // engraving-style tonal cross-hatch
+  | 'alignedhatch' // tonal hatch at one angle; darker bands interleave offset lines
+  | 'radialhatch' // aligned hatch as rings/rays around a (possibly off-image) UV centre
   | 'pressurehatch' // even single hatch; tone rides on per-point pen pressure (darker = harder)
   | 'scanlines' // squiggle scanlines (wiggle ∝ darkness)
   | 'tsp' // one continuous line threaded through a density-weighted point cloud
@@ -25,6 +27,9 @@ export type RasterMethod =
   | 'spiral' // one radially-modulated Archimedean spiral
 
 /** Methods that use a random seed (so the inspector offers a re-roll). */
+/** Radial hatch layout: concentric rings (never cross) or rays through the centre. */
+export type RadialMode = 'rings' | 'rays'
+
 export const SEEDED_METHODS: ReadonlySet<RasterMethod> = new Set(['tsp', 'voronoi', 'flowfield'])
 
 export interface RasterParams {
@@ -64,6 +69,11 @@ export interface RasterParams {
   frequency: number
   /** Pressure hatch: contrast of the darkness→pressure map (1 = linear, >1 expands, <1 compresses). */
   pressureContrast: number
+  /** Radial hatch centre in box UV: 0..1 spans the image; values outside put it off the image. */
+  centerU: number
+  centerV: number
+  /** Radial hatch layout. */
+  radialMode: RadialMode
 
   // --- tsp / flowfield ---
   /** 0..1 density of sampled points / seeds. */
@@ -91,10 +101,13 @@ registerElement('raster', {
   // Every method re-traces live (debounced) as params change — they're all fast enough off-thread,
   // so there's no manual "Regenerate" for raster (unlike handwriting's slow model run).
   autoRegenerate: () => true,
-  // Tonal hatching tags each tone band (mirrors the band angle formula in crate/src/raster/tone.rs);
-  // the contour map tags each iso level.
+  // Tonal hatching tags each tone band (mirrors the band angle/offset formulas in
+  // crate/src/raster/tone.rs); the contour map tags each iso level.
   partLabel: (p: RasterParams, part) => {
     if (p.method === 'contourmap') return `Level ${part}`
+    if (p.method === 'alignedhatch' || p.method === 'radialhatch') {
+      return `Band ${part} (+${Math.round(((part - 1) / p.levels) * 100)}%)`
+    }
     if (p.method !== 'hatch') return `Part ${part}`
     const angle = (((p.angle + ((part - 1) * 180) / p.levels) % 180) + 180) % 180
     return `Band ${part} (${Math.round(angle * 10) / 10}°)`
@@ -109,7 +122,7 @@ registerElement('raster', {
 const num = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d)
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 const VALID_METHODS: ReadonlySet<string> = new Set([
-  'contours', 'centerline', 'contourmap', 'hatch', 'pressurehatch', 'scanlines', 'tsp', 'voronoi',
+  'contours', 'centerline', 'contourmap', 'hatch', 'alignedhatch', 'radialhatch', 'pressurehatch', 'scanlines', 'tsp', 'voronoi',
   'flowfield', 'spiral',
 ])
 
@@ -137,6 +150,9 @@ export function sanitizeRasterParams(raw: unknown): RasterParams {
     amplitude: Math.max(0, num(p.amplitude, d.amplitude)),
     frequency: Math.max(0.1, num(p.frequency, d.frequency)),
     pressureContrast: clamp(num(p.pressureContrast, d.pressureContrast), 0, 4),
+    centerU: clamp(num(p.centerU, d.centerU), -100, 100),
+    centerV: clamp(num(p.centerV, d.centerV), -100, 100),
+    radialMode: p.radialMode === 'rays' ? 'rays' : 'rings',
     detail: clamp(num(p.detail, d.detail), 0, 1),
     flowSteps: clamp(Math.floor(num(p.flowSteps, d.flowSteps)), 4, 4000),
     showUnderlay: typeof p.showUnderlay === 'boolean' ? p.showUnderlay : d.showUnderlay,
@@ -168,6 +184,9 @@ export function defaultRasterParams(
     amplitude: 1.2,
     frequency: 5,
     pressureContrast: 1,
+    centerU: 0.5,
+    centerV: 0.5,
+    radialMode: 'rings',
     detail: 0.5,
     flowSteps: 80,
     showUnderlay: true,

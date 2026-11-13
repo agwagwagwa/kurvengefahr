@@ -36,7 +36,8 @@ machine), AxiDraw-style EBB plotters, and GRBL machines, with presets for popula
 - **SVG and DXF import** - files become native, editable paths at real-world size, colors mapped to
   pens; occluded fill regions are clipped away so they don't plot.
 - **Raster tracing** - restyle a photo as strokes: outlines, centerlines, topographic levels,
-  hatching, scanlines, a single TSP tour, flow fields, or spirals, with live preview.
+  cross, aligned, or radial hatching, scanlines, a single TSP tour, flow fields, or spirals, with
+  live preview.
 - **3D models** - import an STL, orbit it in an interactive preview, and it renders as a
   plottable wireframe of the model's feature edges: silhouettes, creases at a tunable angle, and
   boundaries, with hidden lines removed or kept and a perspective or orthographic camera.

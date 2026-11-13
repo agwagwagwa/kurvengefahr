@@ -86,10 +86,12 @@ export const numFieldClass =
   'focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/35'
 
 /** A slider with an inline editable number box. The slider's `max` is a *soft* bound — typing a
- *  larger value is allowed (and the thumb just pins at max) unless `hardMax`. `int` rounds. This is
+ *  larger value is allowed (and the thumb just pins at max) unless `hardMax`; `min` is hard unless
+ *  `softMin` (for knobs like a UV centre that may sit off the image either way). `int` rounds. This is
  *  the default raster knob: drag for feel, type for precision, exceed the range when you want to. */
 export function SliderNum({
-  label, title, min, max, step, value, onChange, hardMax = false, int = false, disabled = false,
+  label, title, min, max, step, value, onChange, hardMax = false, softMin = false, int = false,
+  disabled = false,
 }: {
   label: string
   title?: string
@@ -99,6 +101,7 @@ export function SliderNum({
   value: number
   onChange: (v: number) => void
   hardMax?: boolean
+  softMin?: boolean
   int?: boolean
   disabled?: boolean
 }) {
@@ -112,7 +115,7 @@ export function SliderNum({
 
   const clampNum = (n: number) => {
     let v = int ? Math.round(n) : n
-    v = Math.max(min, v)
+    if (!softMin) v = Math.max(min, v)
     return hardMax ? Math.min(max, v) : v
   }
   const commit = (raw: string) => {

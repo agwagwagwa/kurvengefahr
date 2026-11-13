@@ -10,7 +10,7 @@ import { pressureEnabled } from '../../core/types'
 import type { HandwritingParams } from '../../elements/handwriting'
 import type { LogoParams } from '../../elements/logo'
 import { analyzeLogo, type LogoParamDecl } from '../../elements/logo/analysis'
-import { SEEDED_METHODS, type RasterParams, type RasterMethod } from '../../elements/raster'
+import { SEEDED_METHODS, type RadialMode, type RasterParams, type RasterMethod } from '../../elements/raster'
 import type { ModelParams, ModelProjection } from '../../elements/model'
 import {
   HERSHEY_FONTS,
@@ -292,6 +292,8 @@ const METHOD_LABELS: Record<RasterMethod, string> = {
   centerline: 'Centreline (line art)',
   contourmap: 'Topographic lines',
   hatch: 'Tonal hatching',
+  alignedhatch: 'Aligned tonal hatching',
+  radialhatch: 'Radial aligned hatching',
   pressurehatch: 'Pressure hatch',
   scanlines: 'Squiggle scanlines',
   tsp: 'TSP art (one line)',
@@ -361,6 +363,43 @@ export function RasterInspector({ id, params }: { id: string; params: RasterPara
           <SliderNum label="Tone bands" min={1} max={16} step={1} value={params.levels} hardMax int
             title="How many darkness bands accrue cross-hatch passes, each at its own evenly-spread angle. More = finer tonal range."
             onChange={(v) => up({ levels: v })} />
+        </>
+      )}
+
+      {(m === 'alignedhatch' || m === 'radialhatch') && (
+        <>
+          <SliderNum label="Spacing (mm)" min={0.2} max={8} step={0.1} value={params.spacing}
+            title={m === 'radialhatch'
+              ? 'Gap between base lines (rings: radial gap; rays: gap at the farthest corner). Each darker band adds lines a fraction of this further along.'
+              : 'Gap between base lines. Each darker band adds lines a fraction of this further along, so full black is spacing / bands.'}
+            onChange={(v) => up({ spacing: v })} />
+          {m === 'alignedhatch' && (
+            <SliderNum label="Angle (°)" min={0} max={180} step={5} value={params.angle} hardMax
+              title="Direction of every hatch line (all bands share it)." onChange={(v) => up({ angle: v })} />
+          )}
+          <SliderNum label="Tone bands" min={1} max={16} step={1} value={params.levels} hardMax int
+            title="How many darkness bands each add an offset set of lines. More = finer tonal range."
+            onChange={(v) => up({ levels: v })} />
+        </>
+      )}
+      {m === 'radialhatch' && (
+        <>
+          <Field label="Layout" title="Rings: concentric circles around the centre (never cross). Rays: spokes that all meet at the centre.">
+            <select
+              className={controlClass}
+              value={params.radialMode}
+              onChange={(e) => up({ radialMode: e.target.value as RadialMode })}
+            >
+              <option value="rings">Rings (concentric)</option>
+              <option value="rays">Rays (through centre)</option>
+            </select>
+          </Field>
+          <SliderNum label="Centre U" min={-0.5} max={1.5} step={0.01} softMin value={params.centerU}
+            title="Horizontal centre: 0 = left edge, 1 = right edge. Outside 0..1 puts the centre off the image (type past the slider for further)."
+            onChange={(v) => up({ centerU: v })} />
+          <SliderNum label="Centre V" min={-0.5} max={1.5} step={0.01} softMin value={params.centerV}
+            title="Vertical centre: 0 = top edge, 1 = bottom edge. Outside 0..1 puts the centre off the image (type past the slider for further)."
+            onChange={(v) => up({ centerV: v })} />
         </>
       )}
 

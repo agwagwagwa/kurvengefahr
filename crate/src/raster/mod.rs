@@ -12,6 +12,8 @@
 //! - **contours** — threshold + trace ink/paper boundary (faithful, line-art).
 //! - **contourmap** — topographic iso-tone lines (marching squares at N levels).
 //! - **hatch** — engraving-style tonal cross-hatch (darker tones accrue more passes).
+//! - **alignedhatch** — tonal hatch where darker bands interleave offset lines at one angle.
+//! - **radialhatch** — aligned hatch as rings or rays around a UV centre (may sit off the image).
 //! - **pressurehatch** — one even hatch; tone rides on per-point pen pressure (darker = harder).
 //! - **scanlines** — squiggle scanlines whose wiggle grows with darkness.
 //! - **tsp** — one continuous line threaded through a density-weighted point cloud (TSP art).
@@ -53,6 +55,8 @@ pub fn vectorize(rgba: &[u8], width: u32, height: u32, params: &str) -> Vec<Stro
         "centerline" => centerline::centerline(&grid, &p),
         "contourmap" => contourmap::contourmap(&grid, &p),
         "hatch" => tone::hatch(&grid, &p),
+        "alignedhatch" => tone::aligned_hatch(&grid, &p),
+        "radialhatch" => tone::radial_hatch(&grid, &p),
         "pressurehatch" => tone::pressure_hatch(&grid, &p),
         "scanlines" => scanlines::scanlines(&grid, &p),
         "tsp" => tsp::tsp(&grid, &p),
@@ -104,6 +108,11 @@ pub struct Params {
     pub frequency: f32,
     /// Pressure hatch: contrast of the darkness→pressure map (1 = linear, >1 expands, <1 compresses).
     pub pressure_contrast: f32,
+    /// Radial hatch centre in box UV (0..1 spans the image; outside puts it off the image).
+    pub center_u: f32,
+    pub center_v: f32,
+    /// Radial hatch layout: `"rings"` (concentric, never crossing) or `"rays"` (through the centre).
+    pub radial_mode: String,
 
     // tsp / flow — sampling density
     /// 0..1 density of sampled points / seeds.
@@ -129,6 +138,9 @@ impl Default for Params {
             amplitude: 1.2,
             frequency: 5.0,
             pressure_contrast: 1.0,
+            center_u: 0.5,
+            center_v: 0.5,
+            radial_mode: "rings".into(),
             detail: 0.5,
             flow_steps: 80,
         }
@@ -299,6 +311,8 @@ mod tests {
             "contours",
             "contourmap",
             "hatch",
+            "alignedhatch",
+            "radialhatch",
             "pressurehatch",
             "scanlines",
             "tsp",
