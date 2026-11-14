@@ -1,13 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
 // `@wasm` points at the wasm-pack output (crate/pkg). The `.wasm` itself is loaded
 // at runtime via a `?url` import + `init()`, so no extra wasm plugin is needed.
+// `npm run dev:https` (DEV_HTTPS=1) serves over TLS with a self-signed cert: Web Serial needs a
+// secure context, and a LAN address (e.g. reaching a WSL2 dev server from Windows) isn't one.
+// An env var rather than a mode, so `.env.development` still loads.
 export default defineConfig({
   plugins: [
+    ...(process.env.DEV_HTTPS ? [basicSsl()] : []),
     react(),
     tailwindcss(),
     VitePWA({

@@ -151,7 +151,7 @@ Run through this before every commit:
 
 ## Dev
 
-`npm run dev` (predev builds wasm) · `npm run build` · `npm run build:wasm` · `npm test` (vitest)
+`npm run dev` (predev builds wasm) · `npm run dev:https` (self-signed TLS; Web Serial over a LAN address, e.g. WSL2) · `npm run build` · `npm run build:wasm` · `npm test` (vitest)
 · `cargo test` in `crate/` and in `share-api/`. Requires Rust + `wasm32-unknown-unknown` +
 `wasm-pack`. Local share stack (Garage + share-api; `npm run dev` targets it via
 `.env.development`): `docker compose -f share-api/dev/compose.yml up --build`.
